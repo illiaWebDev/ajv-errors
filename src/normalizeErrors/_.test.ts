@@ -1,44 +1,83 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { JestTagsTreeNode, deriveGetJestTags } from '@illia-web-dev/jest-tags';
-import Ajv, { JSONSchemaType } from 'ajv';
+import { expect, test } from '@jest/globals';
+import { JSONSchemaType } from 'ajv';
 import { normalizeErrors } from './main';
-import { describeWithTags, testWithTags } from '../___jestTagsSetup';
+import { describeWithTags, ajv } from '../___jestSetup';
+import * as wellKnownSchemasNS from '../wellKnownSchemas';
 
-
-const ajv = new Ajv( { allErrors: true } ); // options can be passed, e.g. {allErrors: true}
-
-interface MyData {
-  bar: string
-}
-
-const schema: JSONSchemaType< MyData > = {
-  type: 'object',
-  properties: {
-    bar: { type: 'string', minLength: 2 },
-  },
-  required: [ 'bar' ],
-  additionalProperties: false,
-};
-
-const validate = ajv.compile( schema );
 
 const nodes: JestTagsTreeNode = {
   tags: [ 'normalizeErrors' ],
-  children: [
-    { tags: [ 'normalizeErrorsWorks' ] },
-  ],
 };
 const getJestTags = deriveGetJestTags( nodes );
 
+
 describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () => {
-  testWithTags( getJestTags( '0.0' ), getJestTags( '0.0', true ).join( ', ' ), () => {
-    const data: MyData = { bar: '' };
+  test( 'WithSingleField', () => {
+    interface WithSingleField {
+      foo: string
+    }
 
-    validate( data );
-    const normalizedErrors = normalizeErrors( validate.errors );
+    const schemaForWithString: JSONSchemaType< WithSingleField > = {
+      type: 'object',
+      properties: {
+        foo: wellKnownSchemasNS.nonEmptyString.schema,
+      },
+      required: [ 'foo' ],
+      additionalProperties: false,
+    };
 
-    // eslint-disable-next-line no-void, no-console
-    console.info( JSON.stringify( normalizedErrors, null, 2 ) );
-    // if ( normalizedErrors.length ) console.log( normalizedErrors );
+    const validate = ajv.compile( schemaForWithString );
+
+    const invalidData: WithSingleField = { foo: '' };
+
+    validate( invalidData );
+    const { errors } = validate;
+
+    // eslint-disable-next-line no-console
+    console.log( normalizeErrors( {
+      errors,
+      metasForWellKnown: [
+        wellKnownSchemasNS.nonEmptyString.metaForWellKnown,
+      ],
+    } ) );
+
+    expect( 2 ).toBe( 2 );
+  } );
+
+  test( 'WithTwoFields', () => {
+    interface WithTwoFields {
+      email: string;
+      password: string;
+    }
+
+    const schemaForWithString: JSONSchemaType< WithTwoFields > = {
+      type: 'object',
+      properties: {
+        email: wellKnownSchemasNS.email.schema,
+        password: wellKnownSchemasNS.nonEmptyString.schema,
+      },
+      required: [ 'email', 'password' ],
+      additionalProperties: false,
+    };
+
+    const validate = ajv.compile( schemaForWithString );
+
+    const invalidData: WithTwoFields = { email: '', password: '' };
+
+    validate( invalidData );
+    const { errors } = validate;
+
+    // eslint-disable-next-line no-console
+    console.log( normalizeErrors( {
+      errors,
+      metasForWellKnown: [
+        wellKnownSchemasNS.nonEmptyString.metaForWellKnown,
+        wellKnownSchemasNS.email.metaForWellKnown,
+      ],
+    } ) );
+
+    expect( 2 ).toBe( 2 );
   } );
 } );

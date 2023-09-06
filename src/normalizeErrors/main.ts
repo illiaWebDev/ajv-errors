@@ -1,31 +1,33 @@
-import type { ValidateFunction, ErrorObject } from 'ajv';
+import type { ValidateFunction } from 'ajv';
+import type { NormalizedErrors, MetaForWellKnown } from '../types';
+import * as wellKnownGeneral from '../wellKnownSchemas/general/main';
 
 
-export type NormlizedAjvErrors = {
-  [ dottedPathToProperty: string ]: Array<(
-    | {
-      type: 'general',
-      original: ErrorObject;
-    }
-  )>;
+export type NormalizeErrorsArg = {
+  errors?: ValidateFunction[ 'errors' ];
+  metasForWellKnown: MetaForWellKnown[];
 };
-export const normalizeErrors = ( errors?: ValidateFunction< unknown >[ 'errors' ] ): NormlizedAjvErrors => (
-  ( errors || [] ).reduce< NormlizedAjvErrors >(
+
+
+export const normalizeErrors = ( arg: NormalizeErrorsArg ): NormalizedErrors => {
+  const { errors, metasForWellKnown } = arg;
+
+  if ( errors === null || errors === undefined || errors.length === 0 ) return {};
+
+  return errors.reduce< NormalizedErrors >(
     ( a, e ) => {
-      const { instancePath } = e;
-      const dottedPath = instancePath.split( '/' ).filter( Boolean ).join( '.' );
-      const prevValue = a[ dottedPath ] || [];
+      const key = e.instancePath.split( '/' ).filter( Boolean ).join( '.' );
 
-      const nextA: typeof a = {
+      const matchedMeta = metasForWellKnown.find( it => it.matchesErrObject( e ) );
+      const normalized = matchedMeta === undefined
+        ? wellKnownGeneral.toNormalizedError( e )
+        : matchedMeta.toNormalizedError( e );
+
+      return {
         ...a,
-        [ dottedPath ]: prevValue.concat( {
-          type: 'general',
-          original: e,
-        } ),
+        [ key ]: ( a[ key ] || [] ).concat( normalized ),
       };
-
-      return nextA;
     },
     {},
-  )
-);
+  );
+};
