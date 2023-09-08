@@ -1,16 +1,16 @@
 import type { ValidateFunction } from 'ajv';
-import type { NormalizedErrors, MetaForWellKnown } from '../types';
+import type { NormalizedErrors, NormalizationMeta } from '../types';
 import * as wellKnownGeneral from '../wellKnownSchemas/general/main';
 
 
 export type NormalizeErrorsArg = {
   errors?: ValidateFunction[ 'errors' ];
-  metasForWellKnown: MetaForWellKnown[];
+  normalizetionMetas: NormalizationMeta[];
 };
 
 
 export const normalizeErrors = ( arg: NormalizeErrorsArg ): NormalizedErrors => {
-  const { errors, metasForWellKnown } = arg;
+  const { errors, normalizetionMetas } = arg;
 
   if ( errors === null || errors === undefined || errors.length === 0 ) return {};
 
@@ -18,7 +18,7 @@ export const normalizeErrors = ( arg: NormalizeErrorsArg ): NormalizedErrors => 
     ( a, e ) => {
       const key = e.instancePath.split( '/' ).filter( Boolean ).join( '.' );
 
-      const matchedMeta = metasForWellKnown.find( it => it.matchesErrObject( e ) );
+      const matchedMeta = normalizetionMetas.find( it => it.matchesErrObject( e ) );
       const normalized = matchedMeta === undefined
         ? wellKnownGeneral.toNormalizedError( e )
         : matchedMeta.toNormalizedError( e );

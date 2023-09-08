@@ -1,5 +1,5 @@
 import type { JSONSchemaType } from 'ajv';
-import type { MatchesErrObject, MatchesNormalizedError, MetaForWellKnown, ToNormalizedError } from '../../types';
+import type { MatchesErrObject, NormalizationMeta, ToNormalizedError } from '../../types';
 import { toNormalizedError as toNormalizedGeneralError } from '../general';
 
 
@@ -13,18 +13,15 @@ export const matchesErrObject: MatchesErrObject = e => (
   e.keyword === 'format' && e.params.format === schema.format
 );
 
-export const violatedConstraint = 'email';
+export const violatedConstraint = 'well-known-schemas/email';
+export const defaultUiMessage = 'Invalid email';
 export const toNormalizedError: ToNormalizedError = e => (
   matchesErrObject( e )
-    ? { violatedConstraint, originalError: e }
+    ? { violatedConstraint, originalError: e, uiMessage: defaultUiMessage }
     : toNormalizedGeneralError( e )
 );
 
-export const matchesNormalizedError: MatchesNormalizedError = e => (
-  e.violatedConstraint === violatedConstraint
-);
-
-export const metaForWellKnown: MetaForWellKnown = {
+export const normalizationMeta: NormalizationMeta = {
   matchesErrObject,
   toNormalizedError,
 };

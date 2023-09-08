@@ -2,37 +2,42 @@
 import { JestTagsTreeNode, deriveGetJestTags } from '@illia-web-dev/jest-tags';
 import { expect, test } from '@jest/globals';
 import { JSONSchemaType } from 'ajv';
-import { schema, matchesErrObject, toNormalizedError, violatedConstraint } from './main';
+import {
+  schema,
+  matchesErrObject,
+  toNormalizedError,
+  violatedConstraint,
+  defaultUiMessage,
+} from './main';
 import { describeWithTags, ajv } from '../../___jestSetup';
 
 
 const nodes: JestTagsTreeNode = {
-  tags: [ 'wellKnownErrors' ],
+  tags: [ 'wellKnownErrors', 'nonEmptyString' ],
   children: [
-    { tags: [ 'nonEmptyString' ] },
+    { tags: [ 'schema', 'v9GnboCbSe' ] },
+    { tags: [ 'matchesErrObject', 'v9GnboCbSe' ] },
+    { tags: [ 'toNormalizedError', 'v9GnboCbSe' ] },
   ],
 };
 const getJestTags = deriveGetJestTags( nodes );
 
+interface WithString {
+  foo: string
+}
+
+const schemaForWithString: JSONSchemaType< WithString > = {
+  type: 'object',
+  properties: { foo: schema },
+  required: [ 'foo' ],
+  additionalProperties: false,
+};
+
+const validate = ajv.compile( schemaForWithString );
+
 
 describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () => {
   describeWithTags( getJestTags( '0.0' ), getJestTags( '0.0', true ).join( ', ' ), () => {
-    interface WithString {
-      foo: string
-    }
-
-    const schemaForWithString: JSONSchemaType< WithString > = {
-      type: 'object',
-      properties: {
-        foo: schema,
-      },
-      required: [ 'foo' ],
-      additionalProperties: false,
-    };
-
-    const validate = ajv.compile( schemaForWithString );
-
-
     test( 'rejects incorrect values', () => {
       const incorrectValues: WithString[] = [
         { foo: '' },
@@ -58,8 +63,11 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
         expect( validate( value ) ).toBe( true );
       } );
     } );
+  } );
 
-    test( 'matchesErrObject function succeeds', () => {
+
+  describeWithTags( getJestTags( '0.1' ), getJestTags( '0.1', true ).join( ', ' ), () => {
+    test( 'succeeds', () => {
       const incorrectValue: WithString = { foo: '    ' };
       expect( validate( incorrectValue ) ).toBe( false );
 
@@ -74,8 +82,10 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
 
       expect( matchesErrObject( typedFirst ) ).toBe( true );
     } );
+  } );
 
-    test( 'toNormalizedError transforms correctly', () => {
+  describeWithTags( getJestTags( '0.2' ), getJestTags( '0.2', true ).join( ', ' ), () => {
+    test( 'transforms correctly', () => {
       const incorrectValue: WithString = { foo: '    ' };
       expect( validate( incorrectValue ) ).toBe( false );
 
@@ -92,6 +102,7 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
 
       expect( normalized.violatedConstraint ).toBe( violatedConstraint );
       expect( normalized.originalError ).toBe( first );
+      expect( normalized.uiMessage ).toBe( defaultUiMessage );
     } );
   } );
 } );

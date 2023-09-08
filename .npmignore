@@ -1,4 +1,5 @@
 .husky
+.vscode
 node_modules
 src
 .eslintignore

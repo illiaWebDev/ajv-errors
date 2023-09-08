@@ -6,7 +6,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "husky:prepush": "npm run lint -- --max-warnings=0 && npm test",
-    "transpileToDist": "rm -rf ./dist && tsc && find ./dist -name '*.test.*' -delete && find ./dist -name '*aggregateTests*' -delete",
+    "transpileToDist:post-clean": "find ./dist -name '*.test.*' -delete && find ./dist -name '*aggregateTests*' -delete",
+    "transpileToDist": "rm -rf ./dist && tsc --noUnusedLocals --noUnusedParameters && npm run transpileToDist:post-clean",
     "ts": "tsc --noEmit --watch",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",

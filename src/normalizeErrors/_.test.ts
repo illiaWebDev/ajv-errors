@@ -9,12 +9,16 @@ import * as wellKnownSchemasNS from '../wellKnownSchemas';
 
 const nodes: JestTagsTreeNode = {
   tags: [ 'normalizeErrors' ],
+  children: [
+    { tags: [ 'WithSingleField' ] },
+    { tags: [ 'WithTwoFields' ] },
+  ],
 };
 const getJestTags = deriveGetJestTags( nodes );
 
 
 describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () => {
-  test( 'WithSingleField', () => {
+  describeWithTags( getJestTags( '0.0' ), getJestTags( '0.0', true ).join( ', ' ), () => {
     interface WithSingleField {
       foo: string
     }
@@ -35,49 +39,94 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
     validate( invalidData );
     const { errors } = validate;
 
-    // eslint-disable-next-line no-console
-    console.log( normalizeErrors( {
-      errors,
-      metasForWellKnown: [
-        wellKnownSchemasNS.nonEmptyString.metaForWellKnown,
-      ],
-    } ) );
 
-    expect( 2 ).toBe( 2 );
+    test( 'default error message', () => {
+      const normalized = normalizeErrors( {
+        errors,
+        normalizetionMetas: [
+          wellKnownSchemasNS.nonEmptyString.normalizationMeta,
+        ],
+      } );
+      expect( Object.keys( normalized ).length ).toBe( 1 );
+
+      const { foo } = normalized;
+
+      expect( Array.isArray( foo ) ).toBe( true );
+
+      const [ first, ...rest ] = foo as NonNullable< typeof foo >;
+      expect( rest.length ).toBe( 0 );
+
+      expect( first && first.violatedConstraint ).toBe( wellKnownSchemasNS.nonEmptyString.violatedConstraint );
+      expect( first && first.uiMessage ).toBe( wellKnownSchemasNS.nonEmptyString.defaultUiMessage );
+    } );
+
+    test( 'augmented error message', () => {
+      const augmentedErrMessage = 'This field cannot be empty';
+
+      const normalized = normalizeErrors( {
+        errors,
+        normalizetionMetas: [
+          {
+            ...wellKnownSchemasNS.nonEmptyString.normalizationMeta,
+            toNormalizedError: e => (
+              wellKnownSchemasNS.nonEmptyString.matchesErrObject( e )
+                ? {
+                  ...wellKnownSchemasNS.nonEmptyString.toNormalizedError( e ),
+                  uiMessage: augmentedErrMessage,
+                }
+                : wellKnownSchemasNS.nonEmptyString.toNormalizedError( e )
+            ),
+          },
+        ],
+      } );
+      expect( Object.keys( normalized ).length ).toBe( 1 );
+
+      const { foo } = normalized;
+
+      expect( Array.isArray( foo ) ).toBe( true );
+
+      const [ first, ...rest ] = foo as NonNullable< typeof foo >;
+      expect( rest.length ).toBe( 0 );
+
+      expect( first && first.violatedConstraint ).toBe( wellKnownSchemasNS.nonEmptyString.violatedConstraint );
+      expect( first && first.uiMessage ).toBe( augmentedErrMessage );
+    } );
   } );
 
-  test( 'WithTwoFields', () => {
-    interface WithTwoFields {
-      email: string;
-      password: string;
-    }
+  describeWithTags( getJestTags( '0.1' ), getJestTags( '0.1', true ).join( ', ' ), () => {
+    test( 'WithTwoFields', () => {
+      interface WithTwoFields {
+        email: string;
+        password: string;
+      }
 
-    const schemaForWithString: JSONSchemaType< WithTwoFields > = {
-      type: 'object',
-      properties: {
-        email: wellKnownSchemasNS.email.schema,
-        password: wellKnownSchemasNS.nonEmptyString.schema,
-      },
-      required: [ 'email', 'password' ],
-      additionalProperties: false,
-    };
+      const schemaForWithString: JSONSchemaType< WithTwoFields > = {
+        type: 'object',
+        properties: {
+          email: wellKnownSchemasNS.email.schema,
+          password: wellKnownSchemasNS.nonEmptyString.schema,
+        },
+        required: [ 'email', 'password' ],
+        additionalProperties: false,
+      };
 
-    const validate = ajv.compile( schemaForWithString );
+      const validate = ajv.compile( schemaForWithString );
 
-    const invalidData: WithTwoFields = { email: '', password: '' };
+      const invalidData: WithTwoFields = { email: '', password: '' };
 
-    validate( invalidData );
-    const { errors } = validate;
+      validate( invalidData );
+      const { errors } = validate;
 
-    // eslint-disable-next-line no-console
-    console.log( normalizeErrors( {
-      errors,
-      metasForWellKnown: [
-        wellKnownSchemasNS.nonEmptyString.metaForWellKnown,
-        wellKnownSchemasNS.email.metaForWellKnown,
-      ],
-    } ) );
+      // eslint-disable-next-line no-console
+      console.log( normalizeErrors( {
+        errors,
+        normalizetionMetas: [
+          wellKnownSchemasNS.nonEmptyString.normalizationMeta,
+          wellKnownSchemasNS.email.normalizationMeta,
+        ],
+      } ) );
 
-    expect( 2 ).toBe( 2 );
+      expect( 2 ).toBe( 2 );
+    } );
   } );
 } );
