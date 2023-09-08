@@ -1,12 +1,12 @@
 {
-  "name": "@illia-web-dev/jest-tags",
-  "version": "0.0.3",
+  "name": "@illia-web-dev/ajv-errors",
+  "version": "0.0.1",
   "description": "",
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
   "scripts": {
     "husky:prepush": "npm run lint -- --max-warnings=0 && npm test",
-    "transpileToDist:post-clean": "find ./dist -name '*.test.*' -delete && find ./dist -name '*aggregateTests*' -delete",
+    "transpileToDist:post-clean": "find ./dist -name '*.test.*' -delete && find ./dist -name '*aggregateTests*' -delete && find ./dist -name '*jestSetup*' -delete",
     "transpileToDist": "rm -rf ./dist && tsc --noUnusedLocals --noUnusedParameters && npm run transpileToDist:post-clean",
     "ts": "tsc --noEmit --watch",
     "lint": "eslint . --ext .ts",
@@ -17,20 +17,20 @@
     "publish-package:test:pack:check-and-transpile": "npm run husky:prepush && npm run transpileToDist",
     "publish-package:test:pack": "npm run publish-package:test:pack:check-and-transpile && npm pack",
     "publish-package:test:unpack-archive": "tar zxvf",
-    "publish-package:test:clean": "rm -rf ./package && rm -rf illia-web-dev-jest-tags*",
+    "publish-package:test:clean": "rm -rf ./package && rm -rf illia-web-dev-ajv-errors*",
     "publish-package:publish": "npm run publish-package:test:pack:check-and-transpile && npm publish --access public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/illiaWebDev/jest-tags.git"
+    "url": "git+https://github.com/illiaWebDev/ajv-errors.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/illiaWebDev/jest-tags/issues"
+    "url": "https://github.com/illiaWebDev/ajv-errors/issues"
   },
-  "homepage": "https://github.com/illiaWebDev/jest-tags#readme",
+  "homepage": "https://github.com/illiaWebDev/ajv-errors#readme",
   "peerDependencies": {
     "ajv": ">=8",
     "ajv-formats": ">=2",
