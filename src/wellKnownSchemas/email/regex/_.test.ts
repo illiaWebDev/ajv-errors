@@ -2,7 +2,7 @@
 import { JestTagsTreeNode, deriveGetJestTags } from '@illia-web-dev/jest-tags';
 import type { JSONSchemaType } from 'ajv';
 import { test, expect } from '@jest/globals';
-import { describeWithTags, ajv } from '../../___jestSetup';
+import { describeWithTags, ajv } from '../../../___jestSetup';
 import {
   schema,
   matchesErrObject,
@@ -13,11 +13,11 @@ import {
 
 
 const nodes: JestTagsTreeNode = {
-  tags: [ 'wellKnownErrors', 'email' ],
+  tags: [ 'wellKnownErrors', 'email', 'regex' ],
   children: [
-    { tags: [ 'schema', 'JH3SZjHoNY' ] },
-    { tags: [ 'matchesErrObject', 'JH3SZjHoNY' ] },
-    { tags: [ 'toNormalizedError', 'JH3SZjHoNY' ] },
+    { tags: [ 'schema', 'aKT9miv94D' ] },
+    { tags: [ 'matchesErrObject', 'aKT9miv94D' ] },
+    { tags: [ 'toNormalizedError', 'aKT9miv94D' ] },
   ],
 };
 const getJestTags = deriveGetJestTags( nodes );
@@ -49,8 +49,11 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
         { email: '1231eqdsad' },
         { email: 'test@' },
         { email: 'test@gmail' },
-        // for some reason ajv says that this one is valid
+        { email: 'test@gmail.' },
+        // yet again this one is considered valid, perhaps it really is?
         // { email: 'test@gmail.c' },
+        { email: ' test@gmail.com' },
+        { email: 'test@gmail.com ' },
       ];
 
       invalidPayloads.forEach( payload => {

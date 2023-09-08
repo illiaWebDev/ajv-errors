@@ -37,12 +37,12 @@
     "tslib": ">=2"
   },
   "devDependencies": {
-    "ajv": "8.12.0",
-    "ajv-formats": "2.1.1",
     "@illia-web-dev/jest-tags": "0.0.3",
     "@jest/globals": "29.5.0",
     "@typescript-eslint/eslint-plugin": "5.48.2",
     "@typescript-eslint/parser": "5.48.2",
+    "ajv": "8.12.0",
+    "ajv-formats": "2.1.1",
     "eslint": "8.32.0",
     "eslint-config-airbnb-base": "15.0.0",
     "eslint-config-airbnb-typescript": "17.0.0",

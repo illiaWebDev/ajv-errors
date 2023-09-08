@@ -103,7 +103,7 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
       const schemaForWithString: JSONSchemaType< WithTwoFields > = {
         type: 'object',
         properties: {
-          email: wellKnownSchemasNS.email.schema,
+          email: wellKnownSchemasNS.email.ajvFormat.schema,
           password: wellKnownSchemasNS.nonEmptyString.schema,
         },
         required: [ 'email', 'password' ],
@@ -122,7 +122,7 @@ describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () 
         errors,
         normalizetionMetas: [
           wellKnownSchemasNS.nonEmptyString.normalizationMeta,
-          wellKnownSchemasNS.email.normalizationMeta,
+          wellKnownSchemasNS.email.ajvFormat.normalizationMeta,
         ],
       } ) );
 
