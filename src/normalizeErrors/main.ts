@@ -5,12 +5,12 @@ import * as wellKnownGeneral from '../wellKnownSchemas/general/main';
 
 export type NormalizeErrorsArg = {
   errors?: ValidateFunction[ 'errors' ];
-  normalizetionMetas: NormalizationMeta[];
+  normalizationMetas: NormalizationMeta[];
 };
 
 
 export const normalizeErrors = ( arg: NormalizeErrorsArg ): NormalizedErrors => {
-  const { errors, normalizetionMetas } = arg;
+  const { errors, normalizationMetas } = arg;
 
   if ( errors === null || errors === undefined || errors.length === 0 ) return {};
 
@@ -18,7 +18,7 @@ export const normalizeErrors = ( arg: NormalizeErrorsArg ): NormalizedErrors => 
     ( a, e ) => {
       const key = e.instancePath.split( '/' ).filter( Boolean ).join( '.' );
 
-      const matchedMeta = normalizetionMetas.find( it => it.matchesErrObject( e ) );
+      const matchedMeta = normalizationMetas.find( it => it.matchesErrObject( e ) );
       const normalized = matchedMeta === undefined
         ? wellKnownGeneral.toNormalizedError( e )
         : matchedMeta.toNormalizedError( e );

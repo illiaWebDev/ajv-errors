@@ -10,8 +10,10 @@ import * as wellKnownSchemasNS from '../wellKnownSchemas';
 const nodes: JestTagsTreeNode = {
   tags: [ 'normalizeErrors' ],
   children: [
-    { tags: [ 'WithSingleField' ] },
-    { tags: [ 'WithTwoFields' ] },
+    { tags: [ 'no errors to normalize', 'Ny0kI80EUE' ] },
+    { tags: [ 'fallback to general', 'Ny0kI80EUE' ] },
+    { tags: [ 'correctly normalizes real data', 'Ny0kI80EUE' ] },
+    { tags: [ 'uiMessage override', 'Ny0kI80EUE' ] },
   ],
 };
 const getJestTags = deriveGetJestTags( nodes );
@@ -19,114 +21,184 @@ const getJestTags = deriveGetJestTags( nodes );
 
 describeWithTags( getJestTags( '0' ), getJestTags( '0', true ).join( ', ' ), () => {
   describeWithTags( getJestTags( '0.0' ), getJestTags( '0.0', true ).join( ', ' ), () => {
-    interface WithSingleField {
-      foo: string
-    }
-
-    const schemaForWithString: JSONSchemaType< WithSingleField > = {
-      type: 'object',
-      properties: {
-        foo: wellKnownSchemasNS.nonEmptyString.schema,
-      },
-      required: [ 'foo' ],
-      additionalProperties: false,
-    };
-
-    const validate = ajv.compile( schemaForWithString );
-
-    const invalidData: WithSingleField = { foo: '' };
-
-    validate( invalidData );
-    const { errors } = validate;
-
-
-    test( 'default error message', () => {
-      const normalized = normalizeErrors( {
-        errors,
-        normalizetionMetas: [
-          wellKnownSchemasNS.nonEmptyString.normalizationMeta,
-        ],
-      } );
-      expect( Object.keys( normalized ).length ).toBe( 1 );
-
-      const { foo } = normalized;
-
-      expect( Array.isArray( foo ) ).toBe( true );
-
-      const [ first, ...rest ] = foo as NonNullable< typeof foo >;
-      expect( rest.length ).toBe( 0 );
-
-      expect( first && first.violatedConstraint ).toBe( wellKnownSchemasNS.nonEmptyString.violatedConstraint );
-      expect( first && first.uiMessage ).toBe( wellKnownSchemasNS.nonEmptyString.defaultUiMessage );
-    } );
-
-    test( 'augmented error message', () => {
-      const augmentedErrMessage = 'This field cannot be empty';
-
-      const normalized = normalizeErrors( {
-        errors,
-        normalizetionMetas: [
-          {
-            ...wellKnownSchemasNS.nonEmptyString.normalizationMeta,
-            toNormalizedError: e => (
-              wellKnownSchemasNS.nonEmptyString.matchesErrObject( e )
-                ? {
-                  ...wellKnownSchemasNS.nonEmptyString.toNormalizedError( e ),
-                  uiMessage: augmentedErrMessage,
-                }
-                : wellKnownSchemasNS.nonEmptyString.toNormalizedError( e )
-            ),
-          },
-        ],
-      } );
-      expect( Object.keys( normalized ).length ).toBe( 1 );
-
-      const { foo } = normalized;
-
-      expect( Array.isArray( foo ) ).toBe( true );
-
-      const [ first, ...rest ] = foo as NonNullable< typeof foo >;
-      expect( rest.length ).toBe( 0 );
-
-      expect( first && first.violatedConstraint ).toBe( wellKnownSchemasNS.nonEmptyString.violatedConstraint );
-      expect( first && first.uiMessage ).toBe( augmentedErrMessage );
+    test( 'returns empty object when there are no errors to normalize', () => {
+      expect( normalizeErrors( { normalizationMetas: [] } ) ).toStrictEqual( {} );
+      expect( normalizeErrors( { normalizationMetas: [], errors: null } ) ).toStrictEqual( {} );
+      expect( normalizeErrors( { normalizationMetas: [], errors: [] } ) ).toStrictEqual( {} );
     } );
   } );
 
   describeWithTags( getJestTags( '0.1' ), getJestTags( '0.1', true ).join( ', ' ), () => {
-    test( 'WithTwoFields', () => {
-      interface WithTwoFields {
+    test( 'falls back to general error if metas array is empty', () => {
+      interface Data {
+        name: string;
         email: string;
         password: string;
       }
 
-      const schemaForWithString: JSONSchemaType< WithTwoFields > = {
+      const schema: JSONSchemaType< Data > = {
         type: 'object',
         properties: {
-          email: wellKnownSchemasNS.email.ajvFormat.schema,
-          password: wellKnownSchemasNS.nonEmptyString.schema,
+          name: { type: 'string', minLength: 4 },
+          email: { type: 'string', minLength: 4 },
+          password: { type: 'string', minLength: 4 },
         },
-        required: [ 'email', 'password' ],
         additionalProperties: false,
+        required: [ 'email', 'name', 'password' ],
       };
 
-      const validate = ajv.compile( schemaForWithString );
+      const validate = ajv.compile( schema );
+      const data: Data = {
+        email: '',
+        name: '',
+        password: '',
+      };
 
-      const invalidData: WithTwoFields = { email: '', password: '' };
+      validate( data );
 
-      validate( invalidData );
-      const { errors } = validate;
+      const { email, name, password } = normalizeErrors( { errors: validate.errors, normalizationMetas: [] } );
 
-      // eslint-disable-next-line no-console
-      console.log( normalizeErrors( {
-        errors,
-        normalizetionMetas: [
+      // ===================================================================================
+
+      expect( email ).toBeTruthy();
+      const [ emailErr, ...restEmailErrs ] = email as NonNullable< typeof email >;
+
+      expect( restEmailErrs.length ).toBe( 0 );
+      expect( emailErr && emailErr.violatedConstraint ).toBe( wellKnownSchemasNS.general.violatedConstraint );
+
+      // ===================================================================================
+
+      expect( name ).toBeTruthy();
+      const [ nameErr, ...restNameErrs ] = name as NonNullable< typeof name >;
+
+      expect( restNameErrs.length ).toBe( 0 );
+      expect( nameErr && nameErr.violatedConstraint ).toBe( wellKnownSchemasNS.general.violatedConstraint );
+
+      // ===================================================================================
+
+      expect( password ).toBeTruthy();
+      const [ passwordErr, ...restPasswordErrs ] = password as NonNullable< typeof password >;
+
+      expect( restPasswordErrs.length ).toBe( 0 );
+      expect( passwordErr && passwordErr.violatedConstraint ).toBe( wellKnownSchemasNS.general.violatedConstraint );
+    } );
+  } );
+
+
+  describeWithTags( getJestTags( '0.2' ), getJestTags( '0.2', true ).join( ', ' ), () => {
+    test( getJestTags( '0.2', true )[ 0 ] || '', () => {
+      interface Data {
+        name: string;
+        email: string;
+      }
+
+      const schema: JSONSchemaType< Data > = {
+        type: 'object',
+        properties: {
+          name: wellKnownSchemasNS.nonEmptyString.schema,
+          email: wellKnownSchemasNS.email.regex.schema,
+        },
+        additionalProperties: false,
+        required: [ 'email', 'name' ],
+      };
+
+      const validate = ajv.compile( schema );
+      const data: Data = {
+        email: '',
+        name: '',
+      };
+
+      validate( data );
+
+      const { email, name } = normalizeErrors( {
+        errors: validate.errors,
+        normalizationMetas: [
+          wellKnownSchemasNS.email.regex.normalizationMeta,
           wellKnownSchemasNS.nonEmptyString.normalizationMeta,
-          wellKnownSchemasNS.email.ajvFormat.normalizationMeta,
         ],
-      } ) );
+      } );
 
-      expect( 2 ).toBe( 2 );
+      // ===================================================================================
+
+      expect( email ).toBeTruthy();
+      const [ emailErr, ...restEmailErrs ] = email as NonNullable< typeof email >;
+
+      expect( restEmailErrs.length ).toBe( 0 );
+      expect( emailErr && emailErr.violatedConstraint ).toBe( wellKnownSchemasNS.email.regex.violatedConstraint );
+
+      // ===================================================================================
+
+      expect( name ).toBeTruthy();
+      const [ nameErr, ...restNameErrs ] = name as NonNullable< typeof name >;
+
+      expect( restNameErrs.length ).toBe( 0 );
+      expect( nameErr && nameErr.violatedConstraint ).toBe( wellKnownSchemasNS.nonEmptyString.violatedConstraint );
+    } );
+  } );
+
+  describeWithTags( getJestTags( '0.3' ), getJestTags( '0.3', true ).join( ', ' ), () => {
+    test( 'successfully overrides ui messages', () => {
+      interface Data {
+        name: string;
+        email: string;
+      }
+
+      const schema: JSONSchemaType< Data > = {
+        type: 'object',
+        properties: {
+          name: wellKnownSchemasNS.nonEmptyString.schema,
+          email: wellKnownSchemasNS.email.regex.schema,
+        },
+        additionalProperties: false,
+        required: [ 'email', 'name' ],
+      };
+
+      const validate = ajv.compile( schema );
+      const data: Data = {
+        email: '',
+        name: '',
+      };
+
+      validate( data );
+
+      const emailErrMessage = 'ERROR! EMAIL FORMAT IS INVALID';
+      const nameErrMessage = 'ERROR! NAME IS REQUIRED';
+
+      const { email, name } = normalizeErrors( {
+        errors: validate.errors,
+        normalizationMetas: [
+          {
+            ...wellKnownSchemasNS.email.regex.normalizationMeta,
+            toNormalizedError: e => ( {
+              ...wellKnownSchemasNS.email.regex.toNormalizedError( e ),
+              uiMessage: emailErrMessage,
+            } ),
+          },
+          {
+            ...wellKnownSchemasNS.nonEmptyString.normalizationMeta,
+            toNormalizedError: e => ( {
+              ...wellKnownSchemasNS.nonEmptyString.toNormalizedError( e ),
+              uiMessage: nameErrMessage,
+            } ),
+          },
+        ],
+      } );
+
+      // ===================================================================================
+
+      expect( email ).toBeTruthy();
+      const [ emailErr, ...restEmailErrs ] = email as NonNullable< typeof email >;
+
+      expect( restEmailErrs.length ).toBe( 0 );
+      expect( emailErr && emailErr.uiMessage ).toBe( emailErrMessage );
+
+      // ===================================================================================
+
+      expect( name ).toBeTruthy();
+      const [ nameErr, ...restNameErrs ] = name as NonNullable< typeof name >;
+
+      expect( restNameErrs.length ).toBe( 0 );
+      expect( nameErr && nameErr.uiMessage ).toBe( nameErrMessage );
     } );
   } );
 } );
